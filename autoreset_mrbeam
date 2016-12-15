@@ -1,6 +1,5 @@
 #!/usr/bin/python
 
-import RPi.GPIO as GPIO
 import sys, os, re, time, fcntl
 import smbus as smbus
 
@@ -8,7 +7,6 @@ fd = sys.stdin.fileno()
 fl = fcntl.fcntl(fd, fcntl.F_GETFL)
 fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
 
-GPIO.setmode(GPIO.BOARD)
 dtr = re.compile('.+TIOCM_DTR.+')
 start = time.time()
 
@@ -18,9 +16,9 @@ i2c = smbus.SMBus(1)
 reset   = 0x08ff  # P13=Prog_RESET_Ardu
 nominal = 0x10ff  # P14=Luefter_Rasp
 
-def reset():
+def do_reset():
   i2c.write_byte_data(i2c_addr, reset & 0xff, (reset >> 8) & 0xff)
-  time.sleep(0.12)
+  time.sleep(0.25)
   i2c.write_byte_data(i2c_addr, nominal & 0xff, (nominal >> 8) & 0xff)
 
 def process():
@@ -29,7 +27,7 @@ def process():
       duration = time.time() - start
       input = sys.stdin.readline().strip()
       if dtr.match(input):
-        reset()
+        do_reset()
         return
       elif duration > 5000:
         return
